@@ -7,32 +7,46 @@ const authMiddleware = require('../middleware/authMiddleware');
 const userExistsMiddleware = require('../middleware/userMiddleware');
 
 // Inscription d'un utilisateur
-router.post('/signup', async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Cet email est déjà utilisé.' });
+router.post('/register', [
+    check('name', 'Name is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Password should be at least 6 characters long').isLength({ min: 6 }),
+    check('photo', 'Photo is required').not().isEmpty()
+  ], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ message: 'Invalid inputs', errors: errors.array() });
     }
-
-    // Hacher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Créer l'utilisateur
-    const newUser = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-    });
-
-    res.status(201).json({ message: 'Utilisateur inscrit avec succès.', user: newUser });
-  } catch (error) {
-    console.error('Erreur dans POST /signup:', error);
-    res.status(500).json({ error: 'Erreur interne.' });
-  }
-});
+  
+    const { name, email, password, photo } = req.body;
+  
+    try {
+      let user = await User.findOne({ email });
+      if (user) {
+        return res.status(400).json({ message: 'User already exists' });
+      }
+  
+      user = new User({
+        name,
+        email,
+        password,
+        photo
+      });
+  
+      
+      await user.save();
+  
+      res.status(201).json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        photo: user.photo,
+      });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
 
 // Connexion d'un utilisateur
 router.post('/login', async (req, res) => {

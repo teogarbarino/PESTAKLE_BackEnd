@@ -28,8 +28,10 @@ const ItemSchema = new mongoose.Schema({
 
 // Middleware : Avant de supprimer un article
 ItemSchema.pre('remove', async function (next) {
-  const itemId = this._id;
-
+  const itemId = this._id;4
+  *4
+  *ù4
+  **23
   try {
     // Suppression des favoris associés à cet article
     await Favorite.deleteMany({ item: itemId });
