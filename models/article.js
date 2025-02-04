@@ -10,28 +10,27 @@ const ItemSchema = new mongoose.Schema({
   colors: { type: String, default: '' }, // Couleurs (optionnel)
   price: { type: Number, required: true }, // Prix (requis)
   recommendedPrice: { type: Number, default: null }, // Prix recommandé (optionnel)
-  category: { 
-    type: String, 
-    enum: ['clothing', 'toy', 'accessory'], 
-    required: true 
+  category: {
+    type: String,
+    enum: ['clothing', 'toy', 'accessory'],
+    required: true
   }, // Catégorie (requis, avec valeurs limitées)
   description: { type: String, default: '' }, // Description (optionnel)
   reports: { type: Number, default: 0 }, // Nombre de signalements
-  status: { 
-    type: String, 
-    enum: ['active', 'flagged', 'deleted'], 
-    default: 'active' 
+  status: {
+    type: String,
+    enum: ['active', 'flagged', 'deleted'],
+    default: 'active'
   }, // Statut de l'article
+  livraison: { type: Boolean, default: false }, // Indique si l'article est livré ou disponible pour livraison
+  boosted: { type: Boolean, default: false }, // Indique si l'article est boosté (mis en avant)
   createdAt: { type: Date, default: Date.now }, // Date de création
   updatedAt: { type: Date, default: Date.now } // Date de mise à jour
 });
 
 // Middleware : Avant de supprimer un article
 ItemSchema.pre('remove', async function (next) {
-  const itemId = this._id;4
-  *4
-  *ù4
-  **23
+  const itemId = this._id;
   try {
     // Suppression des favoris associés à cet article
     await Favorite.deleteMany({ item: itemId });

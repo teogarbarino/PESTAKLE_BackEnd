@@ -1,13 +1,13 @@
-const express = require('express'); 
+const express = require('express');
 const http = require('http');
 const bodyParser = require('body-parser');
-require('dotenv').config(); 
-const connectDB = require('./db.js'); 
+require('dotenv').config();
+const connectDB = require('./db.js');
 
 // Connecte-toi à la base de données
 connectDB();
 
-const app = express(); 
+const app = express();
 const server = http.createServer(app);
 
 // Middleware pour analyser le corps des requêtes
@@ -22,16 +22,16 @@ const PORT = process.env.PORT || 3000;
 
 // Routes
 app.use('/users', require('./routes/userRoutes'));
+/*
 app.use('/settings', require('./routes/userSettingsRoutes'));
 app.use('/items', require('./routes/itemRoutes'));
 app.use('/favorites', require('./routes/favoriteRoutes'));
 app.use('/conversations', require('./routes/conversationRoutes'));
-app.use('/messages', require('./routes/messageRouter')); // Correction : fichier renommé pour cohérence
-app.use('/transactions', require('./routes/transactionRoute')); // Correction : fichier renommé pour cohérence
-
+app.use('/messages', require('./routes/messageRouter')); 
+app.use('/transactions', require('./routes/transactionRoute')); */
 // Lancer le serveur
-server.listen(PORT, () => { 
-    console.log(`Serveur démarré sur le port ${PORT}`); 
-}); 
+server.listen(PORT, () => {
+    console.log(`Serveur démarré sur le port ${PORT}`);
+});
 
 module.exports = app;

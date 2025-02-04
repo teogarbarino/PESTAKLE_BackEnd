@@ -2,31 +2,26 @@ const mongoose = require('mongoose');
 
 // Schéma des paramètres utilisateur
 const UserSettingsSchema = new mongoose.Schema({
-  user: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true, // Référence obligatoire à l'utilisateur
-    unique: true // Chaque utilisateur doit avoir un seul ensemble de paramètres
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true
   },
-  theme: { 
-    type: String, 
-    enum: ['light', 'dark'], // Restreint à deux thèmes possibles
-    default: 'light' // Valeur par défaut
+  theme: {
+    type: String,
+    enum: ['light', 'dark'],
+    default: 'light'
   },
-  fontSize: { 
-    type: Number, 
-    default: 16, // Taille de police par défaut
-    min: 12, // Taille minimale
-    max: 24 // Taille maximale pour éviter des tailles démesurées
+  fontSize: {
+    type: Number,
+    default: 16,
+    min: 12,
+    max: 24
   },
-  contrast: { 
-    type: String, 
-    enum: ['normal', 'high'], // Deux niveaux de contraste
-    default: 'normal' // Valeur par défaut
-  },
-  updatedAt: { 
-    type: Date, 
-    default: Date.now // Date de dernière mise à jour
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
