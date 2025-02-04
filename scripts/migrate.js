@@ -3,16 +3,16 @@ require('dotenv').config();
 const modelsPath = '../models/';
 
 // Importation des modèles
-const User = require(`${modelsPath}user`);
+const User = require(`${modelsPath}users`);
 const Item = require(`${modelsPath}item`);
 const Transaction = require(`${modelsPath}transaction`);
 const Conversation = require(`${modelsPath}conversation`);
 const Favorite = require(`${modelsPath}favorite`);
 const Message = require(`${modelsPath}message`);
 const Order = require(`${modelsPath}order`);
-const UserSettings = require(`${modelsPath}usersettings`);
+const UserSettings = require(`${modelsPath}userSettings`);
 const Wishlist = require(`${modelsPath}wishlist`);
-const UserProfile = require(`${modelsPath}userprofile`);
+const UserProfile = require(`${modelsPath}userProfile`);
 
 async function migrateModel(model, updates = {}) {
     try {
