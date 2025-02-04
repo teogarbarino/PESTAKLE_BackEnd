@@ -24,7 +24,10 @@ router.post('/register', [
   const { username, email, password, profilePicture, bio, role, trustIndex, nbBoosted } = req.body;
 
   try {
-    let user = await User.findOne({ email });
+    let user = await User.findOne({
+      email, phoneNumber,
+      ipAddress: clientIp,
+    });
     if (user) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -43,6 +46,8 @@ router.post('/register', [
       role: role || 'user',
       trustIndex: 100,
       nbBoosted: 0,
+      phoneNumber,
+      ipAddress: getClientIp(req),
     });
 
     await user.save();
@@ -163,5 +168,19 @@ router.put('/settings', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Erreur interne.' });
   }
 });
+
+function getClientIp(req) {
+  let ip =
+    req.headers["x-forwarded-for"] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    req.connection.socket?.remoteAddress;
+
+  if (ip.includes(",")) {
+    ip = ip.split(",")[0];
+  }
+
+  return ip.replace("::ffff:", "");
+}
 
 module.exports = router;
