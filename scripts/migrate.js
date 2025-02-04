@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const User = require('../models/User');
-const Item = require('../models/Item');
+const User = require('./models/User');
+const Item = require('./models/Item');
 const Transaction = require('./models/Transaction');
 const Conversation = require('./models/Conversation');
 const Favorite = require('./models/Favorite');
