@@ -1,16 +1,18 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
+const path = require('path');
 
-const User = require('./models/User');
-const Item = require('./models/Item');
-const Transaction = require('./models/Transaction');
-const Conversation = require('./models/Conversation');
-const Favorite = require('./models/Favorite');
-const Message = require('./models/Message');
-const Order = require('./models/Order');
-const UserSettings = require('./models/UserSettings');
-const Wishlist = require('./models/Wishlist');
-const UserProfile = require('./models/UserProfile');
+// Importation des modèles
+const User = require(path.join(__dirname, '../models/user'));
+const Item = require(path.join(__dirname, '../models/item'));
+const Transaction = require(path.join(__dirname, '../models/transaction'));
+const Conversation = require(path.join(__dirname, '../models/conversation'));
+const Favorite = require(path.join(__dirname, '../models/favorite'));
+const Message = require(path.join(__dirname, '../models/message'));
+const Order = require(path.join(__dirname, '../models/order'));
+const UserSettings = require(path.join(__dirname, '../models/usersettings'));
+const Wishlist = require(path.join(__dirname, '../models/wishlist'));
+const UserProfile = require(path.join(__dirname, '../models/userprofile'));
 
 async function migrateModel(model, updates = {}) {
     try {
