@@ -38,7 +38,7 @@ async function migrateModel(model, updates = {}) {
 
 async function runMigrations() {
     try {
-        await mongoose.connect(process.env.MONGO_URI, {
+        await mongoose.connect(process.env.DATABASE_URL, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
