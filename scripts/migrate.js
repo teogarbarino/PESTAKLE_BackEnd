@@ -4,10 +4,10 @@ const modelsPath = '../models/';
 
 // Importation des modèles
 const User = require(`${modelsPath}users`);
-const Item = require(`${modelsPath}item`);
+const Item = require(`${modelsPath}items`);
 const Transaction = require(`${modelsPath}transaction`);
 const Conversation = require(`${modelsPath}conversation`);
-const Favorite = require(`${modelsPath}favorite`);
+const Favorite = require(`${modelsPath}favoris`);
 const Message = require(`${modelsPath}message`);
 const Order = require(`${modelsPath}order`);
 const UserSettings = require(`${modelsPath}userSettings`);
