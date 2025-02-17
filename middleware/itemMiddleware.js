@@ -1,4 +1,4 @@
-const Item = require('../models/Article');
+const Item = require('../models/items');
 
 const itemOwnershipMiddleware = async (req, res, next) => {
   try {
