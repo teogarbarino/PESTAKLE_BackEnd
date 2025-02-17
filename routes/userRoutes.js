@@ -1,5 +1,3 @@
-
-
 // 📌 **Inscription d'un utilisateur**
 const express = require('express');
 const router = express.Router();
@@ -10,33 +8,41 @@ const bcrypt = require('bcrypt');
 const { check, validationResult } = require('express-validator');
 const authMiddleware = require('../middleware/authMiddleware');
 
+console.log("🚀 Routeur utilisateur chargé");
+
 // 📌 **Inscription d'un utilisateur**
 router.post('/register', [
   check('username', 'Username is required').not().isEmpty(),
   check('email', 'Please include a valid email').isEmail(),
   check('password', 'Password should be at least 6 characters long').isLength({ min: 6 }),
 ], async (req, res) => {
+  console.log("🔵 Requête reçue sur /register");
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log("🔴 Erreur de validation:", errors.array());
     return res.status(422).json({ message: 'Invalid inputs', errors: errors.array() });
   }
 
-  const { username, email, password, profilePicture, bio, role, trustIndex, nbBoosted } = req.body;
+  const { username, email, password, profilePicture, bio, role, trustIndex, nbBoosted, phoneNumber } = req.body;
+  console.log("🟢 Données reçues:", { username, email, profilePicture, bio, role, trustIndex, nbBoosted, phoneNumber });
 
   try {
-    let user = await User.findOne({
-      email, phoneNumber,
-      ipAddress: clientIp,
-    });
+    console.log("🔍 Vérification si l'utilisateur existe déjà...");
+    let user = await User.findOne({ email });
+
     if (user) {
+      console.log("🔴 Utilisateur déjà existant:", user.email);
       return res.status(400).json({ message: 'User already exists' });
     }
 
     // Hasher le mot de passe
+    console.log("🔑 Hash du mot de passe en cours...");
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+    console.log("✅ Mot de passe hashé");
 
-
+    console.log("📝 Création de l'utilisateur...");
     user = new User({
       username,
       email,
@@ -51,18 +57,23 @@ router.post('/register', [
     });
 
     await user.save();
+    console.log("✅ Utilisateur enregistré:", user._id);
 
     // Création des paramètres utilisateur par défaut
+    console.log("🛠️ Création des paramètres utilisateur...");
     const userSettings = new UserSettings({
       user: user._id,
       theme: 'light',
       fontSize: 16
     });
     await userSettings.save();
+    console.log("✅ Paramètres utilisateur créés");
 
     // Générer un token JWT
+    console.log("🔐 Génération du token...");
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+    console.log("✅ Inscription réussie !");
     res.status(201).json({
       message: 'User registered successfully',
       user: {
@@ -82,7 +93,7 @@ router.post('/register', [
     });
 
   } catch (err) {
-    console.error(err.message);
+    console.error("🔴 Erreur serveur:", err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -90,22 +101,29 @@ router.post('/register', [
 // 📌 **Connexion d'un utilisateur**
 router.post('/login', async (req, res) => {
   try {
+    console.log("🔵 Requête reçue sur /login");
     const { email, password } = req.body;
+    console.log("🟢 Données reçues:", { email });
 
     const user = await User.findOne({ email });
     if (!user) {
+      console.log("🔴 Utilisateur introuvable:", email);
       return res.status(404).json({ error: 'Utilisateur introuvable.' });
     }
 
     // Vérification du mot de passe
+    console.log("🔑 Vérification du mot de passe...");
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log("🔴 Mot de passe incorrect");
       return res.status(401).json({ error: 'Mot de passe incorrect.' });
     }
 
     // Générer un token JWT
+    console.log("🔐 Génération du token...");
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+    console.log("✅ Connexion réussie !");
     res.status(200).json({
       message: 'Connexion réussie.',
       token,
@@ -119,52 +137,7 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Erreur dans POST /login:', error);
-    res.status(500).json({ error: 'Erreur interne.' });
-  }
-});
-
-// 📌 **Obtenir les informations de l'utilisateur connecté**
-router.get('/me', authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).select('-password');
-    if (!user) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    }
-
-    // Récupérer les paramètres utilisateur associés
-    const userSettings = await UserSettings.findOne({ user: req.user._id });
-
-    res.status(200).json({
-      user,
-      userSettings
-    });
-  } catch (error) {
-    console.error('Erreur dans GET /me:', error);
-    res.status(500).json({ error: 'Erreur interne.' });
-  }
-});
-
-// 📌 **Mettre à jour les paramètres utilisateur**
-router.put('/settings', authMiddleware, async (req, res) => {
-  try {
-    const { theme, fontSize } = req.body;
-
-    let userSettings = await UserSettings.findOne({ user: req.user._id });
-    if (!userSettings) {
-      return res.status(404).json({ error: 'Paramètres utilisateur introuvables.' });
-    }
-
-    // Mettre à jour les paramètres
-    userSettings.theme = theme || userSettings.theme;
-    userSettings.fontSize = fontSize || userSettings.fontSize;
-    userSettings.updatedAt = Date.now();
-
-    await userSettings.save();
-
-    res.status(200).json({ message: 'Paramètres mis à jour', userSettings });
-  } catch (error) {
-    console.error('Erreur dans PUT /settings:', error);
+    console.error("🔴 Erreur serveur dans /login:", error);
     res.status(500).json({ error: 'Erreur interne.' });
   }
 });
