@@ -87,7 +87,8 @@ router.post('/register', [
         updatedAt: user.updatedAt,
       },
       userSettings,
-      token
+      token,
+      password,
     });
 
   } catch (err) {
