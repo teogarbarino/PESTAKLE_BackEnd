@@ -137,7 +137,7 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error("🔴 Erreur serveur dans /login:", error);
     console.error(password, user.password);
-    res.status(500).json({ error: 'Erreur interne.' });
+    res.status(500).json({ error: $password });
   }
 });
 
