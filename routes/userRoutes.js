@@ -40,7 +40,7 @@ router.post('/register', [
     user = new User({
       username,
       email,
-      password, // ⚠️ Pas besoin de hasher ici, c'est géré par `pre('save')`
+      password,
       profilePicture: profilePicture || null,
       bio: bio || '',
       role: role || 'user',
@@ -136,6 +136,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error("🔴 Erreur serveur dans /login:", error);
+    console.error(password, user.password);
     res.status(500).json({ error: 'Erreur interne.' });
   }
 });
