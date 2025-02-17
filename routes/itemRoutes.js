@@ -18,11 +18,53 @@ router.get('/', async (req, res) => {
 // Créer un nouvel article
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const item = await Item.create({ ...req.body, user: req.user._id });
-    res.status(201).json(item);
+    console.log("🔵 Requête reçue sur /items");
+
+    const { photos, brand, size, materials, colors, price, recommendedPrice, category, description, livraison, boosted } = req.body;
+
+    // Vérifier si les champs obligatoires sont bien fournis
+    if (!price || !category) {
+      console.log("🔴 Champ obligatoire manquant");
+      return res.status(400).json({ error: "Le prix et la catégorie sont requis." });
+    }
+
+    // Vérifier que la catégorie est valide
+    const validCategories = ['clothing', 'toy', 'accessory'];
+    if (!validCategories.includes(category)) {
+      console.log("🔴 Catégorie invalide :", category);
+      return res.status(400).json({ error: "Catégorie invalide. Choisissez parmi 'clothing', 'toy', 'accessory'." });
+    }
+
+    // Créer un nouvel article
+    const item = new Item({
+      user: req.user._id, // ID de l'utilisateur connecté
+      photos: photos || [],
+      brand: brand || '',
+      size: size || '',
+      materials: materials || '',
+      colors: colors || '',
+      price,
+      recommendedPrice: recommendedPrice || null,
+      category,
+      description: description || '',
+      reports: 0,
+      status: 'active',
+      livraison: livraison || false,
+      boosted: boosted || false,
+    });
+
+    // Sauvegarder l'article en base
+    await item.save();
+    console.log("✅ Article créé avec succès :", item._id);
+
+    res.status(201).json({
+      message: "Article créé avec succès",
+      item
+    });
+
   } catch (error) {
-    console.error('Erreur dans POST /items:', error);
-    res.status(500).json({ error: 'Erreur interne.' });
+    console.error("🔴 Erreur dans POST /items :", error);
+    res.status(500).json({ error: "Erreur interne." });
   }
 });
 
