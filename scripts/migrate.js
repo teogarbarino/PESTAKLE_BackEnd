@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 const modelsPath = '../models/';
+const bcrypt = require('bcrypt');
 
 // Importation des modèles
 const User = require(`${modelsPath}users`);
@@ -45,8 +46,11 @@ async function runMigrations() {
 
         console.log('🚀 Connexion MongoDB réussie. Lancement des migrations...');
 
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash("DefaultPassword123!", salt);
+
         await Promise.all([
-            migrateModel(User, { trustIndex: 0, nbBoosted: 0 }),
+            migrateModel(User, { trustIndex: 0, nbBoosted: 0, password: hashedpassword }),
             migrateModel(Item, { reports: 0, boosted: false }),
             migrateModel(Transaction, {}),
             migrateModel(Conversation, {}),
