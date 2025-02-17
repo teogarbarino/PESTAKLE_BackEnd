@@ -42,6 +42,20 @@ UserSchema.pre('remove', async function (next) {
   }
 });
 
+UserSchema.pre('save', async function (next) {
+  if (this.isModified('password') || this.isNew) {
+    try {
+      const hash = await bcrypt.hash(this.password, 10);
+      this.password = hash;
+      console.log("✅ Mot de passe hashé avec succès !");
+    } catch (error) {
+      console.error("❌ Erreur lors du hash du mot de passe :", error);
+      return next(error);
+    }
+  }
+  next();
+});
+
 // Création du modèle
 const User = mongoose.model('User', UserSchema);
 

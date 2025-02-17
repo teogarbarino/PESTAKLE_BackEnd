@@ -24,8 +24,8 @@ router.post('/register', [
     return res.status(422).json({ message: 'Invalid inputs', errors: errors.array() });
   }
 
-  const { username, email, password, profilePicture, bio, role, trustIndex, nbBoosted, phoneNumber } = req.body;
-  console.log("🟢 Données reçues:", { username, email, profilePicture, bio, role, trustIndex, nbBoosted, phoneNumber });
+  const { username, email, password, profilePicture, bio, role, phoneNumber } = req.body;
+  console.log("🟢 Données reçues:", { username, email, profilePicture, bio, role, phoneNumber });
 
   try {
     console.log("🔍 Vérification si l'utilisateur existe déjà...");
@@ -36,17 +36,11 @@ router.post('/register', [
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hasher le mot de passe
-    console.log("🔑 Hash du mot de passe en cours...");
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    console.log("✅ Mot de passe hashé");
-
     console.log("📝 Création de l'utilisateur...");
     user = new User({
       username,
       email,
-      password: hashedPassword,
+      password, // ⚠️ Pas besoin de hasher ici, c'est géré par `pre('save')`
       profilePicture: profilePicture || null,
       bio: bio || '',
       role: role || 'user',
@@ -57,7 +51,11 @@ router.post('/register', [
     });
 
     await user.save();
-    console.log("✅ Utilisateur enregistré:", user._id);
+    console.log("✅ Utilisateur enregistré avec ID:", user._id);
+
+    // Vérifions que le mot de passe a bien été hashé après enregistrement
+    const userFromDB = await User.findOne({ email }).select('+password');
+    console.log("🔍 Vérification en base: Mot de passe hashé ?", userFromDB.password.startsWith('$2b$') ? "✅ OUI" : "❌ NON");
 
     // Création des paramètres utilisateur par défaut
     console.log("🛠️ Création des paramètres utilisateur...");
