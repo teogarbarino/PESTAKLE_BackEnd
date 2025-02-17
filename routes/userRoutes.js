@@ -85,10 +85,10 @@ router.post('/register', [
         nbBoosted: user.nbBoosted,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        password: user.password,
       },
       userSettings,
       token,
-      password,
     });
 
   } catch (err) {
