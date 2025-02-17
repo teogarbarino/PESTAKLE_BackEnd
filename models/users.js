@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 // Schéma du modèle Utilisateur
 const UserSchema = new mongoose.Schema({
