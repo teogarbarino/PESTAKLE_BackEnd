@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const Favorite = require('../models/favoris');
+const Transaction = require('../models/transaction');
+
 
 // Schéma du modèle Article
 const ItemSchema = new mongoose.Schema({
