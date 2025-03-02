@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Item = require('../models/items');
 const Favorite = require('../models/favoris');
 const Item = require('../models/Item');
 const authMiddleware = require('../middleware/authMiddleware');
