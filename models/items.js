@@ -22,7 +22,7 @@ const ItemSchema = new mongoose.Schema({
   reports: { type: Number, default: 0 }, // Nombre de signalements
   status: {
     type: String,
-    enum: ['active', 'flagged', 'deleted'],
+    enum: ['active', 'flagged', 'deleted', 'protected'],
     default: 'active'
   }, // Statut de l'article
   livraison: { type: Boolean, default: false }, // Indique si l'article est livré ou disponible pour livraison

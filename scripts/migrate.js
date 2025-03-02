@@ -15,6 +15,7 @@ const Order = require(`${modelsPath}order`);
 const UserSettings = require(`${modelsPath}userSettings`);
 const Wishlist = require(`${modelsPath}wishlist`);
 const UserProfile = require(`${modelsPath}userProfile`);
+const Report = require(`${modelsPath}reports`); // 📌 Import du modèle des reports
 
 async function resetCollection(model) {
     try {
@@ -63,7 +64,7 @@ async function runMigrations() {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash("DefaultPassword123!", salt);
 
-        // Suppression et recréation des collections
+        // Suppression et recréation des collections (ajout de `reports`)
         await Promise.all([
             resetCollection(User),
             resetCollection(Item),
@@ -75,6 +76,7 @@ async function runMigrations() {
             resetCollection(UserSettings),
             resetCollection(Wishlist),
             resetCollection(UserProfile),
+            resetCollection(Report),
         ]);
 
         // Ajout des mises à jour
@@ -89,6 +91,7 @@ async function runMigrations() {
             migrateModel(UserSettings, { theme: 'light', fontSize: 16 }),
             migrateModel(Wishlist, {}),
             migrateModel(UserProfile, {}),
+            migrateModel(Report, {}),
         ]);
 
         console.log('✅ Toutes les migrations sont terminées.');

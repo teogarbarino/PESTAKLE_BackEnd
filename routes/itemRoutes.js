@@ -3,6 +3,7 @@ const router = express.Router();
 const Item = require('../models/items');
 const authMiddleware = require('../middleware/authMiddleware');
 const itemOwnershipMiddleware = require('../middleware/itemMiddleware');
+const Report = require('../models/reports');
 
 // Obtenir tous les articles
 // 📌 **Obtenir tous les articles, sauf ceux de l'utilisateur connecté**
@@ -158,5 +159,132 @@ router.get('/estimate-price', async (req, res) => {
     res.status(500).json({ error: "Erreur interne du serveur." });
   }
 });
+
+router.put('/protect/:itemId', authMiddleware, async (req, res) => {
+  try {
+    console.log(`🔵 Protection de l'article ${req.params.itemId} par l'utilisateur ${req.user._id}`);
+
+    const item = await Item.findById(req.params.itemId);
+
+    if (!item) {
+      return res.status(404).json({ error: "Article non trouvé." });
+    }
+
+    // Vérifier si l'utilisateur est admin ou propriétaire
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: "Accès refusé. Seuls les administrateurs peuvent protéger un article." });
+    }
+
+    // Mettre à jour le statut de l'article en `protected`
+    item.status = "protected";
+    await item.save();
+
+    console.log(`✅ Article ${item._id} protégé avec succès.`);
+    res.status(200).json({
+      message: "L'article a été protégé contre les signalements abusifs.",
+      item
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur dans PUT /items/protect/:itemId:", error);
+    res.status(500).json({ error: "Erreur interne du serveur." });
+  }
+});
+
+router.post('/report/:itemId', authMiddleware, async (req, res) => {
+  try {
+    const { reason } = req.body; // Raison du signalement
+    const userId = req.user._id;
+    const itemId = req.params.itemId;
+
+    console.log(`🔵 Tentative de report de l'article ${itemId} par ${userId}`);
+
+    // Vérifier si l'ID de l'article est valide
+    if (!mongoose.Types.ObjectId.isValid(itemId)) {
+      return res.status(400).json({ error: "ID de l'article invalide." });
+    }
+
+    // Vérifier si l'article existe
+    const item = await Item.findById(itemId);
+    if (!item) {
+      return res.status(404).json({ error: "Article non trouvé." });
+    }
+
+    // Empêcher un utilisateur de signaler son propre article
+    if (item.user.toString() === userId.toString()) {
+      return res.status(403).json({ error: "Vous ne pouvez pas signaler votre propre article." });
+    }
+
+    // Vérifier si l'utilisateur a déjà signalé cet article dans la collection `reports`
+    const existingReport = await Report.findOne({ item: itemId, reportedBy: userId });
+    if (existingReport) {
+      return res.status(400).json({ error: "Vous avez déjà signalé cet article." });
+    }
+
+    // Enregistrer le signalement dans la collection `reports`
+    await Report.create({
+      item: itemId,
+      reportedBy: userId,
+      reason
+    });
+
+    // Incrémenter le nombre de signalements sur l'article
+    item.reports += 1;
+
+    // Si l'article atteint 5 signalements et n'est pas `protected`, on le flag automatiquement
+    if (item.reports >= 5 && item.status !== "protected") {
+      item.status = "flagged";
+    }
+
+    // Sauvegarde de l'article
+    await item.save();
+
+    console.log(`✅ Article ${itemId} signalé avec succès. Nombre de reports: ${item.reports}`);
+
+    res.status(200).json({
+      message: "Article signalé avec succès.",
+      item: {
+        id: item._id,
+        reports: item.reports,
+        status: item.status
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur dans POST /items/report/:itemId:", error);
+    res.status(500).json({ error: "Erreur interne du serveur." });
+  }
+});
+
+router.get('/reports/:itemId', authMiddleware, async (req, res) => {
+  try {
+    const itemId = req.params.itemId;
+
+    // Vérifier si l'ID de l'article est valide
+    if (!mongoose.Types.ObjectId.isValid(itemId)) {
+      return res.status(400).json({ error: "ID de l'article invalide." });
+    }
+
+    // Vérifier si l'article existe
+    const item = await Item.findById(itemId);
+    if (!item) {
+      return res.status(404).json({ error: "Article non trouvé." });
+    }
+
+    // Récupérer tous les reports de cet article
+    const reports = await Report.find({ item: itemId }).populate('reportedBy', 'username email');
+
+    res.status(200).json({
+      itemId: item._id,
+      totalReports: reports.length,
+      reports
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur dans GET /items/reports/:itemId:", error);
+    res.status(500).json({ error: "Erreur interne du serveur." });
+  }
+});
+
 
 module.exports = router;
