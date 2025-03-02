@@ -5,6 +5,7 @@ const User = require('../models/users');
 const UserSettings = require('../models/userSettings'); // Import du modèle UserSettings
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const Item = require('../models/items');
 const { check, validationResult } = require('express-validator');
 const authMiddleware = require('../middleware/authMiddleware');
 
