@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Item = require('../models/items');
 const mongoose = require('mongoose');
-const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
+const authMiddlewareModule = require('../middleware/authMiddleware');
+const authMiddleware = authMiddlewareModule.authMiddleware;
+const adminMiddleware = authMiddlewareModule.adminMiddleware;
 const itemOwnershipMiddleware = require('../middleware/itemMiddleware');
 const Report = require('../models/reports');
 
