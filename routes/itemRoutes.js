@@ -102,4 +102,61 @@ router.delete('/:itemId', authMiddleware, itemOwnershipMiddleware, async (req, r
   }
 });
 
+router.get('/estimate-price', async (req, res) => {
+  try {
+    const { category, brand, size } = req.query; // Récupération des filtres
+
+    if (!category) {
+      return res.status(400).json({ error: "La catégorie est requise pour l'estimation." });
+    }
+
+    // Filtrage des articles similaires
+    const filter = { category };
+    if (brand) filter.brand = brand;
+    if (size) filter.size = size;
+
+    const items = await Item.find(filter, { price: 1 }).sort({ price: 1 }); // Trie par prix
+
+    if (items.length < 5) {
+      return res.status(400).json({ error: "Pas assez de données pour estimer un prix." });
+    }
+
+    // Extraire les prix triés
+    let prices = items.map(item => item.price);
+
+    // 📌 Calcul des quartiles (Q1, Q3) et de l'Intervalle Interquartile (IQR)
+    const Q1 = prices[Math.floor(prices.length * 0.25)];
+    const Q3 = prices[Math.floor(prices.length * 0.75)];
+    const IQR = Q3 - Q1;
+    const minAllowed = Q1 - 1.5 * IQR;
+    const maxAllowed = Q3 + 1.5 * IQR;
+
+    // Filtrer les prix en enlevant les outliers
+    prices = prices.filter(price => price >= minAllowed && price <= maxAllowed);
+
+    if (prices.length < 3) {
+      return res.status(400).json({ error: "Trop de valeurs extrêmes, estimation impossible." });
+    }
+
+    // 📌 Recalcul de la moyenne et de l'écart-type sans outliers
+    const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
+    const stdDev = Math.sqrt(variance);
+
+    // 📌 Définition de la fourchette de prix (Moyenne ± 1 écart-type)
+    const minPrice = Math.max(0, Math.round(mean - stdDev));
+    const maxPrice = Math.round(mean + stdDev);
+
+    res.status(200).json({
+      estimatedPrice: Math.round(mean),
+      priceRange: { min: minPrice, max: maxPrice },
+      analyzedItems: prices.length // Nombre d'articles après filtrage
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur dans GET /items/estimate-price:", error);
+    res.status(500).json({ error: "Erreur interne du serveur." });
+  }
+});
+
 module.exports = router;
