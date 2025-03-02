@@ -193,36 +193,50 @@ router.put('/protect/:itemId', authMiddleware, async (req, res) => {
 
 router.post('/report/:itemId', authMiddleware, async (req, res) => {
   try {
+    console.log("🔵 Requête reçue sur /items/report/:itemId");
+
     const { reason } = req.body;
     const userId = req.user._id;
     const itemId = req.params.itemId;
 
-    console.log(`🔵 Tentative de report de l'article ${itemId} par ${userId}`);
+    console.log("🟢 Paramètres reçus :", { userId, itemId, reason });
 
-    // Vérifier si l'ID est valide
+    // Vérifier si l'ID de l'article est valide
     if (!mongoose.Types.ObjectId.isValid(itemId)) {
+      console.log("🔴 ID article invalide :", itemId);
       return res.status(400).json({ error: "ID de l'article invalide." });
     }
 
     // Vérifier si l'article existe
     const item = await Item.findById(itemId);
     if (!item) {
+      console.log("🔴 Article non trouvé :", itemId);
       return res.status(404).json({ error: "Article non trouvé." });
     }
 
+    console.log("🟢 Article trouvé en base :", item._id);
+
     // Empêcher un utilisateur de signaler son propre article
     if (item.user.toString() === userId.toString()) {
+      console.log("🔴 Tentative de signalement de son propre article par :", userId);
       return res.status(403).json({ error: "Vous ne pouvez pas signaler votre propre article." });
     }
 
     // Vérifier si l'utilisateur a déjà signalé cet article
     const existingReport = await Report.findOne({ item: itemId, reportedBy: userId });
     if (existingReport) {
+      console.log("🔴 L'utilisateur a déjà signalé cet article :", { userId, itemId });
       return res.status(400).json({ error: "Vous avez déjà signalé cet article." });
     }
 
     // Enregistrer le signalement
-    await Report.create({ item: itemId, reportedBy: userId, reason });
+    const newReport = await Report.create({
+      item: itemId,
+      reportedBy: userId,
+      reason
+    });
+
+    console.log("✅ Signalement enregistré avec succès :", newReport._id);
 
     // Incrémenter le nombre de signalements sur l'article
     item.reports += 1;
@@ -230,12 +244,20 @@ router.post('/report/:itemId', authMiddleware, async (req, res) => {
     // Si l'article atteint 5 signalements et n'est pas `protected`, on le flag automatiquement
     if (item.reports >= 5 && item.status !== "protected") {
       item.status = "flagged";
+      console.log("🚨 L'article a été flaggé automatiquement :", itemId);
     }
 
     await item.save();
+    console.log("✅ Mise à jour du nombre de reports de l'article :", item.reports);
 
-    console.log(`✅ Article ${itemId} signalé avec succès. Nombre de reports: ${item.reports}`);
-    res.status(200).json({ message: "Article signalé avec succès.", item });
+    res.status(200).json({
+      message: "Article signalé avec succès.",
+      item: {
+        id: item._id,
+        reports: item.reports,
+        status: item.status
+      }
+    });
 
   } catch (error) {
     console.error("❌ ERREUR dans POST /items/report/:itemId:", error);
