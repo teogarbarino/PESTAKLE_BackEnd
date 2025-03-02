@@ -193,13 +193,13 @@ router.put('/protect/:itemId', authMiddleware, async (req, res) => {
 
 router.post('/report/:itemId', authMiddleware, async (req, res) => {
   try {
-    const { reason } = req.body; // Raison du signalement
+    const { reason } = req.body;
     const userId = req.user._id;
     const itemId = req.params.itemId;
 
     console.log(`🔵 Tentative de report de l'article ${itemId} par ${userId}`);
 
-    // Vérifier si l'ID de l'article est valide
+    // Vérifier si l'ID est valide
     if (!mongoose.Types.ObjectId.isValid(itemId)) {
       return res.status(400).json({ error: "ID de l'article invalide." });
     }
@@ -215,18 +215,14 @@ router.post('/report/:itemId', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: "Vous ne pouvez pas signaler votre propre article." });
     }
 
-    // Vérifier si l'utilisateur a déjà signalé cet article dans la collection `reports`
+    // Vérifier si l'utilisateur a déjà signalé cet article
     const existingReport = await Report.findOne({ item: itemId, reportedBy: userId });
     if (existingReport) {
       return res.status(400).json({ error: "Vous avez déjà signalé cet article." });
     }
 
-    // Enregistrer le signalement dans la collection `reports`
-    await Report.create({
-      item: itemId,
-      reportedBy: userId,
-      reason
-    });
+    // Enregistrer le signalement
+    await Report.create({ item: itemId, reportedBy: userId, reason });
 
     // Incrémenter le nombre de signalements sur l'article
     item.reports += 1;
@@ -236,25 +232,17 @@ router.post('/report/:itemId', authMiddleware, async (req, res) => {
       item.status = "flagged";
     }
 
-    // Sauvegarde de l'article
     await item.save();
 
     console.log(`✅ Article ${itemId} signalé avec succès. Nombre de reports: ${item.reports}`);
-
-    res.status(200).json({
-      message: "Article signalé avec succès.",
-      item: {
-        id: item._id,
-        reports: item.reports,
-        status: item.status
-      }
-    });
+    res.status(200).json({ message: "Article signalé avec succès.", item });
 
   } catch (error) {
-    console.error("❌ Erreur dans POST /items/report/:itemId:", error);
-    res.status(500).json({ error: "Erreur interne du serveur." });
+    console.error("❌ ERREUR dans POST /items/report/:itemId:", error);
+    res.status(500).json({ error: `Erreur interne du serveur : ${error.message}` });
   }
 });
+
 
 router.get('/reports/:itemId', authMiddleware, async (req, res) => {
   try {

@@ -104,25 +104,33 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     console.log("🟢 Données reçues:", { email });
 
+    // Vérification de l'utilisateur en base de données
     const user = await User.findOne({ email });
+
     if (!user) {
       console.log("🔴 Utilisateur introuvable:", email);
       return res.status(404).json({ error: 'Utilisateur introuvable.' });
     }
 
+    console.log("🟢 Utilisateur trouvé en base avec ID:", user._id.toString());
+
     // Vérification du mot de passe
     console.log("🔑 Vérification du mot de passe...");
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("🔴 Mot de passe incorrect");
+      console.log("🔴 Mot de passe incorrect pour:", user.email);
       return res.status(401).json({ error: 'Mot de passe incorrect.' });
     }
 
     // Générer un token JWT
-    console.log("🔐 Génération du token...");
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    console.log("🔐 Génération du token avec ID:", user._id.toString());
+    const token = jwt.sign(
+      { id: user._id.toString() },  // 🔥 Assure-toi que l'ID est bien en `string`
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
-    console.log("✅ Connexion réussie !");
+    console.log("✅ Connexion réussie ! Token généré.");
     res.status(200).json({
       message: 'Connexion réussie.',
       token,
@@ -135,10 +143,10 @@ router.post('/login', async (req, res) => {
         nbBoosted: user.nbBoosted
       }
     });
+
   } catch (error) {
     console.error("🔴 Erreur serveur dans /login:", error);
-    console.error(password, user.password);
-    res.status(500).json({ error: $password });
+    res.status(500).json({ error: "Erreur interne du serveur." });
   }
 });
 
