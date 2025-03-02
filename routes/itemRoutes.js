@@ -161,19 +161,27 @@ router.get('/estimate-price', async (req, res) => {
   }
 });
 
-router.put('/protect/:itemId', authMiddleware, async (req, res) => {
+router.put('/protect/:itemId', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    console.log(`🔵 Protection de l'article ${req.params.itemId} par l'utilisateur ${req.user._id}`);
+    console.log(`🔵 Tentative de protection de l'article ${req.params.itemId} par l'admin ${req.user._id}`);
 
+    // Vérifier si `itemId` est un ObjectId valide
+    if (!mongoose.Types.ObjectId.isValid(req.params.itemId)) {
+      console.log("🔴 ID d'article invalide :", req.params.itemId);
+      return res.status(400).json({ error: "ID d'article invalide." });
+    }
+
+    // Rechercher l'article
     const item = await Item.findById(req.params.itemId);
-
     if (!item) {
+      console.log(`🔴 Article ${req.params.itemId} non trouvé.`);
       return res.status(404).json({ error: "Article non trouvé." });
     }
 
-    // Vérifier si l'utilisateur est admin ou propriétaire
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: "Accès refusé. Seuls les administrateurs peuvent protéger un article." });
+    // Vérifier si l'article est déjà protégé
+    if (item.status === "protected") {
+      console.log(`⚠️ L'article ${item._id} est déjà protégé.`);
+      return res.status(400).json({ error: "Cet article est déjà protégé." });
     }
 
     // Mettre à jour le statut de l'article en `protected`
