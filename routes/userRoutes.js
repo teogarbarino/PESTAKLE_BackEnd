@@ -185,56 +185,65 @@ router.put('/boost', authMiddleware, async (req, res) => {
 
 router.get('/trust-index', authMiddleware, async (req, res) => {
   try {
-    console.log(`🔵 Calcul de l'index de confiance pour ${req.user._id}`);
+    console.log("🔵 Requête reçue sur /users/trust-index");
 
-    // Récupérer tous les articles de l'utilisateur (hors deleted)
-    const userItems = await Item.find({ user: req.user._id, status: { $ne: "deleted" } });
+    const userId = req.user._id;
+    console.log("🟢 Calcul de l'index de confiance pour :", userId);
 
-    // Vérifier si l'utilisateur a au moins 10 articles actifs
-    const totalItems = userItems.length;
-    if (totalItems < 10) {
+    // Récupérer tous les articles de l'utilisateur
+    const userItems = await Item.find({ user: userId, status: { $ne: "deleted" } });
+
+    console.log("🟢 Nombre d'articles trouvés :", userItems.length);
+
+    // Vérifier s'il y a assez d'articles pour un calcul fiable
+    if (userItems.length < 10) {
+      console.log("⚠️ Pas assez d'articles pour un index fiable.");
       return res.status(200).json({
         trustIndex: null,
         message: "Pas assez d'articles pour calculer un index de confiance fiable. (Minimum requis: 10)"
       });
     }
 
-    // Filtrer les articles non protégés pour le calcul
+    // Filtrer les articles protégés (car ils ne doivent pas impacter l'index)
     const filteredItems = userItems.filter(item => item.status !== "protected");
 
-    // Vérifier s'il reste encore des articles après filtrage
+    console.log("🟢 Articles analysés (sans les protégés) :", filteredItems.length);
+
     if (filteredItems.length === 0) {
+      console.log("✅ Tous les articles sont protégés → Index de confiance maximal.");
       return res.status(200).json({
         trustIndex: 1,
         message: "Tous les articles sont protégés. Index de confiance maximal."
       });
     }
 
-    // Nombre d'articles flaggés (hors protected)
+    // Nombre d'articles flaggés et moyenne des reports
     const nbFlagged = filteredItems.filter(item => item.status === "flagged").length;
-
-    // Moyenne des signalements (hors protected)
     const totalReports = filteredItems.reduce((sum, item) => sum + item.reports, 0);
     const avgReports = totalReports / filteredItems.length;
 
-    // 📌 Calcul de l'index de confiance avec exclusion des protected
+    console.log("⚠️ Nombre d'articles flaggés :", nbFlagged);
+    console.log("⚠️ Moyenne des reports :", avgReports);
+
+    // Calcul de l'index de confiance
     const trustIndex = Math.max(0, 1 - ((nbFlagged + avgReports) / (filteredItems.length + 1)));
 
-    console.log(`✅ Index de confiance calculé : ${trustIndex}`);
+    console.log("✅ Index de confiance calculé :", trustIndex.toFixed(2));
 
     res.status(200).json({
       trustIndex: trustIndex.toFixed(2),
-      totalItems,
+      totalItems: userItems.length,
       analyzedItems: filteredItems.length,
       nbFlagged,
       avgReports: avgReports.toFixed(2)
     });
 
   } catch (error) {
-    console.error("❌ Erreur dans GET /users/trust-index:", error);
-    res.status(500).json({ error: "Erreur interne du serveur." });
+    console.error("❌ ERREUR dans GET /users/trust-index:", error);
+    res.status(500).json({ error: `Erreur interne du serveur : ${error.message}` });
   }
 });
+
 
 
 function getClientIp(req) {
