@@ -5,15 +5,22 @@ const authMiddleware = require('../middleware/authMiddleware');
 const itemOwnershipMiddleware = require('../middleware/itemMiddleware');
 
 // Obtenir tous les articles
-router.get('/', async (req, res) => {
+// 📌 **Obtenir tous les articles, sauf ceux de l'utilisateur connecté**
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const items = await Item.find();
+    console.log(`🔵 Requête reçue sur /items par l'utilisateur ${req.user._id}`);
+
+    // Exclure les articles de l'utilisateur connecté
+    const items = await Item.find({ user: { $ne: req.user._id } });
+
+    console.log(`✅ ${items.length} articles trouvés, hors ceux de l'utilisateur.`);
     res.status(200).json(items);
   } catch (error) {
-    console.error('Erreur dans GET /items:', error);
+    console.error('❌ Erreur dans GET /items:', error);
     res.status(500).json({ error: 'Erreur interne.' });
   }
 });
+
 
 // Créer un nouvel article
 router.post('/', authMiddleware, async (req, res) => {
@@ -71,9 +78,11 @@ router.post('/', authMiddleware, async (req, res) => {
 // Mettre à jour un article
 router.put('/:itemId', authMiddleware, itemOwnershipMiddleware, async (req, res) => {
   try {
-    Object.assign(req.item, req.body);
-    await req.item.save();
-    res.status(200).json(req.item);
+    const updatedItem = await Item.findByIdAndUpdate(req.params.itemId, req.body, { new: true });
+    if (!updatedItem) {
+      return res.status(404).json({ error: "Article non trouvé" });
+    }
+    res.status(200).json(updatedItem);
   } catch (error) {
     console.error('Erreur dans PUT /items/:itemId:', error);
     res.status(500).json({ error: 'Erreur interne.' });
@@ -83,8 +92,10 @@ router.put('/:itemId', authMiddleware, itemOwnershipMiddleware, async (req, res)
 // Supprimer un article
 router.delete('/:itemId', authMiddleware, itemOwnershipMiddleware, async (req, res) => {
   try {
-    await req.item.remove();
-    res.status(200).json({ message: 'Article supprimé avec succès.' });
+    const deletedItem = await Item.findByIdAndDelete(req.params.itemId);
+    if (!deletedItem) {
+      return res.status(404).json({ error: "Article non trouvé" });
+    }
   } catch (error) {
     console.error('Erreur dans DELETE /items/:itemId:', error);
     res.status(500).json({ error: 'Erreur interne.' });

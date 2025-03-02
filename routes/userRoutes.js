@@ -69,7 +69,7 @@ router.post('/register', [
 
     // Générer un token JWT
     console.log("🔐 Génération du token...");
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
     console.log("✅ Inscription réussie !");
     res.status(201).json({
@@ -120,7 +120,7 @@ router.post('/login', async (req, res) => {
 
     // Générer un token JWT
     console.log("🔐 Génération du token...");
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
     console.log("✅ Connexion réussie !");
     res.status(200).json({
@@ -139,6 +139,39 @@ router.post('/login', async (req, res) => {
     console.error("🔴 Erreur serveur dans /login:", error);
     console.error(password, user.password);
     res.status(500).json({ error: $password });
+  }
+});
+
+router.put('/boost', authMiddleware, async (req, res) => {
+  try {
+    console.log(`🔵 Requête reçue sur /users/boost par l'utilisateur ${req.user._id}`);
+
+    const { nbBoosted } = req.body;
+
+    if (!nbBoosted || nbBoosted <= 0) {
+      return res.status(400).json({ error: "Le nombre de boosts doit être supérieur à 0." });
+    }
+
+    // Mettre à jour le nbBoosted de l'utilisateur
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $inc: { nbBoosted: nbBoosted } }, // ✅ Ajoute `nbBoosted` à l'existant
+      { new: true, runValidators: true }
+    );
+
+    console.log(`✅ ${nbBoosted} boosts ajoutés à l'utilisateur ${req.user._id}`);
+    res.status(200).json({
+      message: `Boosts ajoutés avec succès !`,
+      user: {
+        id: user._id,
+        username: user.username,
+        nbBoosted: user.nbBoosted
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur dans PUT /users/boost:", error);
+    res.status(500).json({ error: "Erreur interne du serveur." });
   }
 });
 
