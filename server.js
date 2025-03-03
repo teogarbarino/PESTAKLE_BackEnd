@@ -24,6 +24,8 @@ const PORT = process.env.PORT || 3000;
 app.use('/users', require('./routes/userRoutes'));
 app.use('/items', require('./routes/itemRoutes'));
 app.use('/favorites', require('./routes/favoriteRoutes'));
+
+app.use('/wishlist', require('./routes/wishlistRoutes'));
 /*
 app.use('/settings', require('./routes/userSettingsRoutes'));
 app.use('/conversations', require('./routes/conversationRoutes'));
